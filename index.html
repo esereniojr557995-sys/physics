@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Momentum Mayhem 3D</title><link rel="stylesheet" href="style.css"></head>
+<body>
+<div id="view"></div>
+<div id="top"><div><b id="lname"></b><span id="ltag"></span></div><div class="r"><span id="sc"></span><button class="ghost" id="menuBtn">☰ Levels</button></div></div>
+<aside id="panel">
+  <div id="formula"></div><p id="brief"></p>
+  <div id="controls"></div><div id="readout"></div>
+  <button id="go">🚀 GO!</button>
+  <small>Drag the scene to look around · Enter = GO</small>
+</aside>
+<div id="pop"></div><div id="msg"></div>
+<div id="win" class="overlay hidden"><div class="card">
+  <h2 id="wt">Level clear!</h2><div class="big" id="ws"></div><p id="wm"></p><p class="fact" id="wf"></p>
+  <div class="row"><button class="ghost" id="wRe">↺ New target</button><button class="ghost" id="wMenu">Levels</button><button id="wNext">Next ▶</button></div>
+</div></div>
+<div id="menu" class="overlay"><div class="card">
+  <h1>MOMENTUM<br>MAYHEM <span>3D</span></h1>
+  <p>Drop crates, fire cannons, smash walls and survive crashes — using <b>free fall</b>, <b>projectile motion</b>, <b>p = mv</b>, <b>J = Ft</b> and <b>conservation of momentum</b>. Set the sliders, hit GO, watch the physics play out.</p>
+  <div class="grid" id="grid"></div>
+  <button class="ghost tiny" id="resetP">Reset progress</button>
+</div></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="engine.js"></script><script src="levels.js"></script><script src="main.js"></script>
+</body></html>
