@@ -72,7 +72,7 @@ const LEVELS=[
   this.vT=this.T/this.m;track(-26,20);this.gate=G.gate(16,COL.teal);
   this.s=G.vehicle(3,COL.blue);this.s.position.x=-20;this.lab=G.label(this.m+' kg');this.lab.position.set(-20,3.6,0);cam(-8,9,24,-8,true);
   return{controls:[{id:'F',label:'Thrust force F',min:100,max:1500,step:100,val:500,unit:' N'},{id:'t',label:'Burn time t',min:.5,max:6,step:.5,val:2,unit:' s'}],
-   info:v=>[['Sled mass',this.m+' kg'],['Target speed',fmt(this.vT,1)+' m/s'],['Your impulse J',fmt(v.F*v.t)+' N·s'],['Speed after burn',fmt(v.F*v.t/this.m,1)+' m/s']]};
+   info:v=>{const a=v.F/this.m,u=.5*a*v.t*v.t<=100?a*v.t:Math.sqrt(200*a),e=(u-this.vT)/this.vT;return[['Sled mass',this.m+' kg'],['Target speed',fmt(this.vT,1)+' m/s'],['Your impulse J',fmt(v.F*v.t)+' N·s'],['Speed at gate',fmt(u,1)+' m/s'],['Off by',(e>=0?'+':'−')+pct(e)+(Math.abs(e)<=.05?' ✓':'')]]}};
  },
  prev(){},
  go(v){const m=this.m,s=this.s;let t=0,x=0,u=0;G.ts=2.5;G.beep(120,.8,'sawtooth',.06,200);
@@ -81,46 +81,46 @@ const LEVELS=[
    setTimeout(()=>Game.end(ok,close(e,.05),x<100?'Too slow — the sled never reached the gate. You need J ≈ '+fmt(this.T)+' N·s.':ok?'Gate speed '+fmt(u,1)+' m/s. Impulse used: '+fmt(v.F*v.t)+' N·s.':'Gate speed '+fmt(u,1)+' m/s was '+pct(e)+(e>0?' too fast':' too slow')+'. You need J ≈ '+fmt(this.T)+' N·s.','LOCKED ON!'),500)}}}},
 
 {name:'Crash Test',tag:'Stopping time',formula:'F · Δt = Δp',
- intro:'The car must stop, so Δp is fixed. A thicker cushion = longer stopping time = smaller force. Keep the force under the dummy limit but fit the bay!',
+ intro:'The car must stop, so Δp = m × v is fixed. You choose the stopping time: Force = Δp ÷ Δt. Too short and the force hurts the dummy; too long and the crumple zone will not fit. Watch the Status line!',
  fact:'A car hitting a wall and a car hitting a haystack have the same impulse, but the haystack spreads it over more time, so the force is far smaller. Same idea: airbags, pole-vault mats.',
  init(keep){
-  if(!keep){this.m=rnd(8,15)*100;this.v=rnd(12,28);this.dmin=rnd(10,18)/10;this.dmax=this.dmin+rnd(8,14)/10;this.Fmax=this.m*this.v*this.v/(2*this.dmin)}
+  if(!keep){this.m=rnd(8,15)*100;this.v=rnd(12,28);this.dmin=rnd(10,18)/10;this.dmax=this.dmin+rnd(12,20)/10;this.Fmax=this.m*this.v*this.v/(2*this.dmin)}
   track(-30,10);G.box(3,6,10,0x7d8794,11.5,3,0);this.cu=G.box(1,3.2,6,COL.brass,9.5,1.6,0);
   const c=this.car=G.vehicle(4,COL.red);c.position.x=-16;this.dummy=G.ball(.4,0xf2e7c9,-.4,2.1,0,c);
   this.bay=G.box(.2,.05,8,0x6fbf73,10-this.dmax,.06,0);this.lab=G.label('');this.lab.position.set(-16,4.2,0);cam(-3,8,22,-3,true);
-  return{controls:[{id:'d',label:'Cushion thickness',min:.2,max:4,step:.1,val:.5,unit:' m'}],
-   info:v=>{const t=2*v.d/this.v,F=this.m*this.v*this.v/(2*v.d);return[[this.m+' kg @ '+this.v+' m/s','p = '+fmt(this.m*this.v)],['Stopping time Δt',fmt(t*1000)+' ms'],['Average force',fmt(F/1000,1)+' kN'],['Dummy limit',fmt(this.Fmax/1000,1)+' kN'],['Bay fits up to',fmt(this.dmax,1)+' m']]}};
+  return{controls:[{id:'t',label:'Stopping time Δt',min:.02,max:.8,step:.01,val:.1,unit:' s',dec:2}],
+   info:v=>{const F=this.m*this.v/v.t,tmax=2*this.dmax/this.v;return[['Car',this.m+' kg @ '+this.v+' m/s'],['Δp = m × v',fmt(this.m*this.v)+' kg·m/s'],['Force = Δp ÷ Δt',fmt(F/1000,1)+' kN'],['Dummy limit',fmt(this.Fmax/1000,1)+' kN'],['Longest stop allowed',fmt(tmax,2)+' s'],['Status',F>this.Fmax?'Too hard ✗':v.t>tmax+1e-9?'Too long ✗':'Safe ✓']]}};
  },
- prev(v){const d=v.d;this.cu.scale.x=d;this.cu.position.x=10-d/2;this.lab.set(v.d.toFixed(1)+' m foam')},
- go(v){const d=v.d,m=this.m,u0=this.v,F=m*u0*u0/(2*d),c=this.car,cu=this.cu,dm=this.dummy,a=u0*u0/(2*d),ok=F<=this.Fmax&&d<=this.dmax,mid=(this.dmin+this.dmax)/2;
-  if(d>this.dmax){G.shake=1;G.beep(110,.4,'square');return setTimeout(()=>Game.end(false,0,'The cushion is '+d.toFixed(1)+' m thick but the bay is only '+fmt(this.dmax,1)+' m. It doesn\'t fit!'),500)}
+ prev(v){const d=v.t*this.v/2;this.cu.scale.x=d;this.cu.position.x=10-d/2;this.lab.set(v.t.toFixed(2)+' s stop')},
+ go(v){const d=v.t*this.v/2,m=this.m,u0=this.v,F=m*u0/v.t,c=this.car,cu=this.cu,dm=this.dummy,a=u0*u0/(2*d),ok=F<=this.Fmax&&d<=this.dmax,mid=(this.dmin+this.dmax)/2;
+  if(d>this.dmax){G.shake=1;G.beep(110,.4,'square');return setTimeout(()=>Game.end(false,0,'Stopping that slowly needs '+d.toFixed(1)+' m of crumple space but the bay only has '+fmt(this.dmax,1)+' m. Stop faster.'),500)}
   let u=u0,t=0,done=0;G.ts=.4;G.beep(140,.6,'sawtooth',.07,200);
   G.tick=dt=>{if(c.position.x+2>=10-d)u=Math.max(0,u-a*dt);c.position.x+=u*dt;const f=c.position.x+2;this.lab.position.x=c.position.x;
    if(f>10-d){const r=Math.max(.01,10-f);cu.scale.x=r;cu.position.x=f+r/2}cam(c.position.x*.5,8,22,c.position.x*.5+2);
    if(!done&&u<=.01){done=1;G.shake=1.2;G.hold=.2;G.burst(10-d,2,0,COL.brass,30,8);G.beep(70,.4,'square',.2,-30);
     if(F>this.Fmax){c.remove(dm);G.stage.add(dm);dm.position.set(c.position.x,2.1,0);dm.material.color.set(COL.red);G.scatter([dm],1,14)}}
-   if(done&&(t+=dt)>1.2){G.tick=null;G.ts=1;Game.end(ok,close(d-mid,(this.dmax-this.dmin)/2),ok?'Dummy survived: '+fmt(F/1000,1)+' kN (limit '+fmt(this.Fmax/1000,1)+') over '+fmt(2*d/u0*1000)+' ms.':'Ouch! '+fmt(F/1000,1)+' kN is over the '+fmt(this.Fmax/1000,1)+' kN limit. Spread the same impulse over more time — thicker cushion.','SURVIVED!')}}}},
+   if(done&&(t+=dt)>1.2){G.tick=null;G.ts=1;Game.end(ok,close(d-mid,(this.dmax-this.dmin)/2),ok?'Dummy survived: '+fmt(F/1000,1)+' kN (limit '+fmt(this.Fmax/1000,1)+') over '+fmt(2*d/u0*1000)+' ms.':'Ouch! '+fmt(F/1000,1)+' kN is over the '+fmt(this.Fmax/1000,1)+' kN limit. Spread the same impulse over more time: choose a longer stopping time.','SURVIVED!')}}}},
 
 {name:'Egg Drop',tag:'Free fall + impulse',formula:'v² = 2gH → F·Δt = Δp',
- intro:'The egg free-falls from the platform. Find its impact speed (v = √2gH), then choose a cushion thick enough to keep the force under the shell limit, but it must fit in the box.',
+ intro:'The egg free-falls from the platform. The panel gives the impact speed, then Δp, then the force. Pick a stopping time that keeps the force under the shell limit but is short enough to fit the box. Watch the Status line!',
  fact:'Free fall gives the speed; the impulse-momentum theorem gives the force. Same Δp over a longer stopping time means a smaller force, which is why landing mats and bent knees work.',
  init(keep){
   if(!keep){this.H=rnd(5,30);this.m=rnd(2,8);this.dmin=rnd(2,6)/10;this.dmax=this.dmin+rnd(3,6)/10;this.Fmax=this.m*9.8*this.H/this.dmin}
   const H=this.H;track(-8,8);G.box(.4,H*.3,.4,0x7d8794,-2,H*.3/2,0);this.plat=G.box(3,.3,3,0x7d8794,0,H*.3-.15,0);
   this.pad=G.box(4,1,4,COL.brass,0,.5,0);this.egg=G.ball(.45,0xf2e7c9,0,H*.3+.56,0);this.egg.scale.y=1.25;
   this.lab=G.label(this.m+' kg · H = '+H+' m');this.lab.position.set(0,H*.3+2.8,0);G.look(0,10,28,0,5,0,true);
-  return{controls:[{id:'d',label:'Cushion thickness',min:.05,max:1.5,step:.05,val:.2,unit:' m'}],
-   info:v=>{const vi=Math.sqrt(19.6*this.H),F=this.m*vi*vi/(2*v.d);return[['Impact speed',fmt(vi,1)+' m/s'],['Stopping time',fmt(2*v.d/vi*1000)+' ms'],['Average force',fmt(F)+' N'],['Shell limit',fmt(this.Fmax)+' N'],['Box fits up to',fmt(this.dmax,2)+' m']]}};
+  return{controls:[{id:'t',label:'Stopping time Δt',min:.02,max:.3,step:.01,val:.03,unit:' s',dec:2}],
+   info:v=>{const vi=Math.sqrt(19.6*this.H),F=this.m*vi/v.t,tmax=2*this.dmax/vi;return[['1. Impact speed',fmt(vi,1)+' m/s'],['2. Δp = m × v',fmt(this.m*vi,1)+' kg·m/s'],['3. Force = Δp ÷ Δt',fmt(F)+' N'],['Shell limit',fmt(this.Fmax)+' N'],['Longest stop allowed',fmt(tmax,2)+' s'],['Status',F>this.Fmax?'Too hard ✗':v.t>tmax+1e-9?'Too long ✗':'Safe ✓']]}};
  },
- prev(v){const th=v.d*2;this.pad.scale.y=th;this.pad.position.y=th/2},
- go(v){const d=v.d,H=this.H,vi=Math.sqrt(19.6*H),F=this.m*vi*vi/(2*d),ok=F<=this.Fmax&&d<=this.dmax,mid=(this.dmin+this.dmax)/2,tf=Math.sqrt(2*H/9.8),e=this.egg,pad=this.pad,th=d*2,y0=H*.3+.56,y1=th+.56;
-  if(d>this.dmax){G.shake=1;G.beep(110,.4,'square');return setTimeout(()=>Game.end(false,0,'The cushion is '+fmt(d,2)+' m thick but the box only fits '+fmt(this.dmax,2)+' m.'),500)}
+ prev(v){const th=v.t*Math.sqrt(19.6*this.H);this.pad.scale.y=th;this.pad.position.y=th/2},
+ go(v){const H=this.H,vi=Math.sqrt(19.6*H),d=v.t*vi/2,F=this.m*vi/v.t,ok=F<=this.Fmax&&d<=this.dmax,mid=(this.dmin+this.dmax)/2,tf=Math.sqrt(2*H/9.8),e=this.egg,pad=this.pad,th=d*2,y0=H*.3+.56,y1=th+.56;
+  if(d>this.dmax){G.shake=1;G.beep(110,.4,'square');return setTimeout(()=>Game.end(false,0,'Stopping that slowly needs '+fmt(d,2)+' m of cushion but the box only fits '+fmt(this.dmax,2)+' m. Stop faster.'),500)}
   this.plat.visible=false;let t=0,done=0,w=0;G.beep(600,.8,'sine',.05,-350);
   G.tick=dt=>{t+=dt;
    if(t<tf){const k=t/tf;e.position.y=y0-(y0-y1)*k*k;this.lab.position.y=e.position.y+2.2;this.lab.set(fmt(9.8*t,1)+' m/s')}
    else{const s=Math.min(1,(t-tf)/.25),n=th*(1-.7*s);pad.scale.y=n;pad.position.y=n/2;e.position.y=n+.56;
     if(!done){done=1;G.shake=1.2;G.hold=.2;G.burst(0,th,0,ok?0xf2e7c9:0xffd23a,35,9);G.beep(80,.4,'square',.2,-30);if(F>this.Fmax){e.material.color.set(COL.red);e.scale.set(1.8,.35,1.8)}}
-    if((w+=dt)>1.4){G.tick=null;Game.end(ok,close(d-mid,(this.dmax-this.dmin)/2),ok?'Egg survived! Impact '+fmt(vi,1)+' m/s, stopped in '+fmt(2*d/vi*1000)+' ms, force '+fmt(F)+' N.':'Crack! '+fmt(F)+' N is over the '+fmt(this.Fmax)+' N shell limit. A thicker cushion means a longer Δt and a smaller F.','EGG-CELLENT!')}}}}},
+    if((w+=dt)>1.4){G.tick=null;Game.end(ok,close(d-mid,(this.dmax-this.dmin)/2),ok?'Egg survived! Impact '+fmt(vi,1)+' m/s, stopped in '+fmt(2*d/vi*1000)+' ms, force '+fmt(F)+' N.':'Crack! '+fmt(F)+' N is over the '+fmt(this.Fmax)+' N shell limit. A longer stopping time means a smaller F.','EGG-CELLENT!')}}}}},
 
 {name:'Sticky Smash',tag:'Conservation',formula:'m₁v₁ = (m₁+m₂)v′',
  intro:'Cart A hits parked cart B and they stick together. Pick A\'s speed so the pair rolls through the gate at the target speed (±5%).',

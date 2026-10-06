@@ -7,7 +7,7 @@ const stars=n=>'★'.repeat(n)+'☆'.repeat(3-n),total=()=>P.pts.reduce((a,b)=>a
 let cur=0,lv,spec,vals={},tries=0,busy=false,failed=false,popText='';
 
 function refresh(){
-  spec.controls.forEach(k=>{const i=$('i_'+k.id);$('o_'+k.id).textContent=G.fmt(vals[k.id],k.step<1?1:0)+k.unit});
+  spec.controls.forEach(k=>{const i=$('i_'+k.id);$('o_'+k.id).textContent=G.fmt(vals[k.id],k.dec!==undefined?k.dec:(k.step<1?1:0))+k.unit});
   $('readout').innerHTML=spec.info(vals).map(r=>'<div><span>'+r[0]+'</span><b>'+r[1]+'</b></div>').join('');
   if(lv.prev&&!busy)lv.prev(vals);
 }
